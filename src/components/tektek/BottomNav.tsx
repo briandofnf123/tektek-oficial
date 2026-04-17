@@ -28,7 +28,11 @@ export const BottomNav = ({ active = "home" }: { active?: string }) => {
           const isActive = current === id;
           const handle = () => {
             setCurrent(id);
-            if (to) navigate(to);
+            if (to) {
+              navigate(to);
+            } else {
+              toast(`${label} chegando em breve ✨`);
+            }
           };
           if (primary) {
             return (
