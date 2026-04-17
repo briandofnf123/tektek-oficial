@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { ArrowLeft, BadgeCheck, Settings, Share2, Grid3x3, Heart, Bookmark } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Settings, Share2, Grid3x3, Heart, Bookmark, Video } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AccountSwitcher } from "@/components/tektek/AccountSwitcher";
-import { feed, formatCount } from "@/data/feed";
+import { formatCount } from "@/data/feed";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ const Profile = () => {
           @{profile.username} ▾
         </button>
         <button
+          onClick={() => toast("Configurações em breve ⚙️")}
           className="grid h-10 w-10 place-items-center rounded-full hover:bg-foreground/10"
           aria-label="Configurações"
         >
@@ -90,10 +92,33 @@ const Profile = () => {
           </div>
 
           <div className="mt-5 flex w-full gap-2">
-            <button className="flex-1 rounded-full bg-gradient-brand py-2.5 font-display font-bold text-background">
+            <button
+              onClick={() => toast("Editor de perfil chegando em breve ✏️")}
+              className="flex-1 rounded-full bg-gradient-brand py-2.5 font-display font-bold text-background transition active:scale-[0.98]"
+            >
               Editar perfil
             </button>
-            <button className="grid h-11 w-11 place-items-center rounded-full border border-border">
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/u/${profile.username}`;
+                try {
+                  if (navigator.share) {
+                    await navigator.share({
+                      title: `${profile.display_name} no TekTek`,
+                      text: `Siga @${profile.username} no TekTek`,
+                      url,
+                    });
+                  } else {
+                    await navigator.clipboard.writeText(url);
+                    toast.success("Link do perfil copiado!");
+                  }
+                } catch {
+                  /* cancelled */
+                }
+              }}
+              className="grid h-11 w-11 place-items-center rounded-full border border-border transition hover:bg-muted active:scale-95"
+              aria-label="Compartilhar perfil"
+            >
               <Share2 className="h-4 w-4" />
             </button>
           </div>
@@ -132,23 +157,25 @@ const Profile = () => {
           ))}
         </nav>
 
-        {/* Grid */}
-        <div className="grid grid-cols-3 gap-0.5 p-0.5">
-          {feed.slice(0, tab === "videos" ? 3 : tab === "liked" ? 5 : 2).map((v) => (
-            <div key={v.id} className="relative aspect-[9/16] overflow-hidden bg-muted">
-              <img
-                src={v.poster}
-                alt={v.caption}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
-                <span className="text-[10px] font-semibold text-foreground">
-                  ▶ {formatCount(v.stats.likes)}
-                </span>
-              </div>
-            </div>
-          ))}
+        {/* Empty state */}
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted">
+            <Video className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <p className="mt-4 font-display text-base font-bold">
+            {tab === "videos"
+              ? "Nenhum vídeo ainda"
+              : tab === "liked"
+                ? "Sem curtidas por aqui"
+                : "Nada salvo ainda"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {tab === "videos"
+              ? "Quando você postar, seus vídeos aparecem aqui."
+              : tab === "liked"
+                ? "Vídeos que você curtir vão ficar guardados aqui."
+                : "Salve vídeos pra rever depois."}
+          </p>
         </div>
       </main>
 
