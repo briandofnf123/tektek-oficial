@@ -20,7 +20,8 @@ const Music = () => {
 
   const usePick = (t: Track) => {
     setPickedId(t.id);
-    setTimeout(() => navigate("/", { state: { selectedTrack: t.id } }), 600);
+    toast.success(`"${t.title}" pronta para seu próximo vídeo 🎵`);
+    setTimeout(() => navigate("/", { state: { selectedTrack: t.id } }), 700);
   };
 
   return (
@@ -169,7 +170,10 @@ const Music = () => {
               <p className="mt-2 text-sm text-muted-foreground">
                 Suba sua música no catálogo oficial do TekTek e alcance milhões de criadores.
               </p>
-              <button className="mt-4 rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground">
+              <button
+                onClick={() => toast("Cadastro de artistas abrirá em breve 🎤")}
+                className="mt-4 rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
+              >
                 Solicitar distribuição
               </button>
             </section>
