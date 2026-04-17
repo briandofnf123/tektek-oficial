@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Music2, Play, TrendingUp, Sparkles, Check } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { useTracks, formatPlays, type Track } from "@/hooks/useTracks";
 import { Logo } from "@/components/tektek/Logo";
 
