@@ -1,5 +1,6 @@
 import { Bookmark, Heart, MessageCircle, Music2, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { formatCount, type FeedItem } from "@/data/feed";
 
 type Props = {
@@ -38,6 +39,22 @@ const Action = ({
 );
 
 export const ActionRail = ({ item, liked, saved, onLike, onSave }: Props) => {
+  const handleComment = () => toast("Comentários chegando em breve 💬");
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "TekTek", text: item.caption, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copiado!");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+  const handleFollow = () => toast("Você seguiu @" + item.author.handle);
+
   return (
     <div className="flex flex-col items-center gap-5">
       {/* Author avatar with follow */}
@@ -48,6 +65,7 @@ export const ActionRail = ({ item, liked, saved, onLike, onSave }: Props) => {
           className="h-12 w-12 rounded-full border-2 border-foreground bg-card object-cover"
         />
         <button
+          onClick={handleFollow}
           aria-label="Seguir"
           className="absolute -bottom-1 left-1/2 grid h-5 w-5 -translate-x-1/2 place-items-center rounded-full bg-gradient-brand text-background shadow-action"
         >
@@ -77,7 +95,11 @@ export const ActionRail = ({ item, liked, saved, onLike, onSave }: Props) => {
         </AnimatePresence>
       </Action>
 
-      <Action ariaLabel="Comentar" count={formatCount(item.stats.comments)}>
+      <Action
+        ariaLabel="Comentar"
+        count={formatCount(item.stats.comments)}
+        onClick={handleComment}
+      >
         <MessageCircle className="h-7 w-7 text-foreground" strokeWidth={2} />
       </Action>
 
@@ -94,7 +116,11 @@ export const ActionRail = ({ item, liked, saved, onLike, onSave }: Props) => {
         />
       </Action>
 
-      <Action ariaLabel="Compartilhar" count={formatCount(item.stats.shares)}>
+      <Action
+        ariaLabel="Compartilhar"
+        count={formatCount(item.stats.shares)}
+        onClick={handleShare}
+      >
         <Share2 className="h-6 w-6 text-foreground" strokeWidth={2} />
       </Action>
 

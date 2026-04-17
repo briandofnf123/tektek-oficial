@@ -1,6 +1,7 @@
 import { Compass, Home, Inbox, Music2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type NavItem = {
   id: string;
@@ -28,7 +29,11 @@ export const BottomNav = ({ active = "home" }: { active?: string }) => {
           const isActive = current === id;
           const handle = () => {
             setCurrent(id);
-            if (to) navigate(to);
+            if (to) {
+              navigate(to);
+            } else {
+              toast(`${label} chegando em breve ✨`);
+            }
           };
           if (primary) {
             return (
