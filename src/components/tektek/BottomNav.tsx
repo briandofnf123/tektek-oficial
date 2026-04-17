@@ -1,13 +1,20 @@
 import { Compass, Home, Inbox, Plus, User } from "lucide-react";
 import { useState } from "react";
 
-const items = [
+type NavItem = {
+  id: string;
+  icon: typeof Home;
+  label: string;
+  primary?: boolean;
+};
+
+const items: NavItem[] = [
   { id: "home", icon: Home, label: "Início" },
   { id: "discover", icon: Compass, label: "Descobrir" },
   { id: "create", icon: Plus, label: "Criar", primary: true },
   { id: "inbox", icon: Inbox, label: "Inbox" },
   { id: "profile", icon: User, label: "Perfil" },
-] as const;
+];
 
 export const BottomNav = () => {
   const [active, setActive] = useState<string>("home");
