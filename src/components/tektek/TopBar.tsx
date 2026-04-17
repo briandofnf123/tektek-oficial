@@ -36,9 +36,8 @@ export const TopBar = () => {
             ))}
           </nav>
 
-          <button className="text-foreground/80 transition hover:text-foreground" aria-label="Buscar">
-            <Search className="h-6 w-6" />
-          </button>
+          {/* right side reserved for floating account chip */}
+          <div className="w-6" />
         </div>
       </div>
     </header>

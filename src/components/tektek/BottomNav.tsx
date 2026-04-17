@@ -1,4 +1,5 @@
-import { Compass, Home, Inbox, Plus, User } from "lucide-react";
+import { Compass, Home, Inbox, Music2, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 type NavItem = {
@@ -6,34 +7,41 @@ type NavItem = {
   icon: typeof Home;
   label: string;
   primary?: boolean;
+  to?: string;
 };
 
 const items: NavItem[] = [
-  { id: "home", icon: Home, label: "Início" },
+  { id: "home", icon: Home, label: "Início", to: "/" },
   { id: "discover", icon: Compass, label: "Descobrir" },
-  { id: "create", icon: Plus, label: "Criar", primary: true },
+  { id: "music", icon: Music2, label: "Music", primary: true, to: "/music" },
   { id: "inbox", icon: Inbox, label: "Inbox" },
-  { id: "profile", icon: User, label: "Perfil" },
+  { id: "profile", icon: User, label: "Perfil", to: "/profile" },
 ];
 
-export const BottomNav = () => {
-  const [active, setActive] = useState<string>("home");
+export const BottomNav = ({ active = "home" }: { active?: string }) => {
+  const navigate = useNavigate();
+  const [current, setCurrent] = useState<string>(active);
   return (
     <nav className="absolute inset-x-0 bottom-0 z-30 bg-gradient-overlay px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-3">
       <div className="flex items-end justify-around">
-        {items.map(({ id, icon: Icon, label, primary }) => {
-          const isActive = active === id;
+        {items.map(({ id, icon: Icon, label, primary, to }) => {
+          const isActive = current === id;
+          const handle = () => {
+            setCurrent(id);
+            if (to) navigate(to);
+          };
           if (primary) {
             return (
               <button
                 key={id}
-                onClick={() => setActive(id)}
+                onClick={handle}
                 className="group relative -mt-2"
                 aria-label={label}
               >
-                <span className="absolute inset-0 rounded-xl bg-gradient-brand opacity-70 blur-md transition group-hover:opacity-100" />
-                <span className="relative flex h-10 w-14 items-center justify-center rounded-xl bg-foreground text-background shadow-action">
-                  <Plus className="h-6 w-6" strokeWidth={2.5} />
+                <span className="absolute inset-0 rounded-2xl bg-gradient-brand opacity-70 blur-md transition group-hover:opacity-100" />
+                <span className="relative flex h-11 w-16 items-center justify-center gap-1 rounded-2xl bg-gradient-brand text-background shadow-action">
+                  <Icon className="h-5 w-5" strokeWidth={2.5} />
+                  <span className="text-[11px] font-bold">Music</span>
                 </span>
               </button>
             );
@@ -41,7 +49,7 @@ export const BottomNav = () => {
           return (
             <button
               key={id}
-              onClick={() => setActive(id)}
+              onClick={handle}
               className="flex flex-col items-center gap-1 px-2"
               aria-label={label}
             >
