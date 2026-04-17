@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          follower_count: number
+          following_count: number
+          id: string
+          updated_at: string
+          user_id: string
+          username: string
+          verified: boolean
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          follower_count?: number
+          following_count?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+          username: string
+          verified?: boolean
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          follower_count?: number
+          following_count?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      tracks: {
+        Row: {
+          artist: string
+          cover_url: string | null
+          created_at: string
+          duration_seconds: number
+          genre: string | null
+          id: string
+          is_official: boolean
+          title: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          genre?: string | null
+          id?: string
+          is_official?: boolean
+          title: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          genre?: string | null
+          id?: string
+          is_official?: boolean
+          title?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
