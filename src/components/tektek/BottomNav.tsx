@@ -1,6 +1,7 @@
 import { Compass, Home, Inbox, Music2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type NavItem = {
   id: string;
