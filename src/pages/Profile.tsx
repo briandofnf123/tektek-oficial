@@ -58,7 +58,7 @@ const Profile = () => {
           @{profile.username} ▾
         </button>
         <button
-          onClick={() => toast("Configurações em breve ⚙️")}
+          onClick={() => navigate("/settings")}
           className="grid h-10 w-10 place-items-center rounded-full hover:bg-foreground/10"
           aria-label="Configurações"
         >
@@ -93,7 +93,7 @@ const Profile = () => {
 
           <div className="mt-5 flex w-full gap-2">
             <button
-              onClick={() => toast("Editor de perfil chegando em breve ✏️")}
+              onClick={() => navigate("/profile/edit")}
               className="flex-1 rounded-full bg-gradient-brand py-2.5 font-display font-bold text-background transition active:scale-[0.98]"
             >
               Editar perfil

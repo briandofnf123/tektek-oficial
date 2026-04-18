@@ -13,9 +13,9 @@ type NavItem = {
 
 const items: NavItem[] = [
   { id: "home", icon: Home, label: "Início", to: "/" },
-  { id: "discover", icon: Compass, label: "Descobrir" },
+  { id: "discover", icon: Compass, label: "Descobrir", to: "/discover" },
   { id: "music", icon: Music2, label: "Music", primary: true, to: "/music" },
-  { id: "inbox", icon: Inbox, label: "Inbox" },
+  { id: "inbox", icon: Inbox, label: "Inbox", to: "/inbox" },
   { id: "profile", icon: User, label: "Perfil", to: "/profile" },
 ];
 
