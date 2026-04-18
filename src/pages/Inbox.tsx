@@ -40,7 +40,7 @@ const Inbox = () => {
       }
 
       const peerIds = convs.map((c) => (c.user_a === user.id ? c.user_b : c.user_a));
-      const [{ data: peers }, { data: previews }] = await Promise.all([
+      const [peersRes, previewsArr] = await Promise.all([
         supabase.from("profiles").select("*").in("user_id", peerIds),
         Promise.all(
           convs.map((c) =>
@@ -52,16 +52,19 @@ const Inbox = () => {
               .limit(1)
               .maybeSingle(),
           ),
-        ).then((arr) => ({ data: arr.map((r) => r.data?.content ?? null) })),
+        ),
       ]);
+      const previews = previewsArr.map((r) => r.data?.content ?? null);
 
       if (!mounted) return;
-      const peerMap = new Map((peers ?? []).map((p) => [p.user_id, p as Profile]));
+      const peerMap = new Map(
+        ((peersRes.data ?? []) as Profile[]).map((p) => [p.user_id, p]),
+      );
       setConversations(
         convs.map((c, i) => ({
           ...c,
           peer: peerMap.get(c.user_a === user.id ? c.user_b : c.user_a) ?? null,
-          preview: previews.data[i],
+          preview: previews[i],
         })),
       );
       setLoading(false);
