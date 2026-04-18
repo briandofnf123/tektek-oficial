@@ -171,7 +171,7 @@ const Music = () => {
                 Suba sua música no catálogo oficial do TekTek e alcance milhões de criadores.
               </p>
               <button
-                onClick={() => toast("Cadastro de artistas abrirá em breve 🎤")}
+                onClick={() => navigate("/music/artist")}
                 className="mt-4 rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
               >
                 Solicitar distribuição

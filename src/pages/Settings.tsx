@@ -52,7 +52,7 @@ const Settings = () => {
         {
           icon: Shield,
           label: "Segurança e login",
-          onClick: () => toast("Painel de segurança em breve 🔐"),
+          onClick: () => navigate("/profile/edit"),
           chevron: true,
         },
       ],
@@ -84,7 +84,7 @@ const Settings = () => {
           icon: Globe,
           label: "Idioma",
           value: "Português",
-          onClick: () => toast("Mais idiomas em breve 🌍"),
+          onClick: () => toast.success("TekTek está em Português 🇧🇷"),
           chevron: true,
         },
       ],
@@ -95,7 +95,8 @@ const Settings = () => {
         {
           icon: HelpCircle,
           label: "Central de ajuda",
-          onClick: () => toast("Central de ajuda em breve"),
+          onClick: () =>
+            toast.success("Fale com a gente: suporte@tektek.app"),
           chevron: true,
         },
         {

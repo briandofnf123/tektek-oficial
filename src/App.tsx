@@ -14,6 +14,8 @@ import Chat from "./pages/Chat.tsx";
 import Settings from "./pages/Settings.tsx";
 import EditProfile from "./pages/EditProfile.tsx";
 import PublicProfile from "./pages/PublicProfile.tsx";
+import Upload from "./pages/Upload.tsx";
+import ArtistUpload from "./pages/ArtistUpload.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/inbox/:username" element={<Chat />} />
             <Route path="/u/:username" element={<PublicProfile />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/music/artist" element={<ArtistUpload />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

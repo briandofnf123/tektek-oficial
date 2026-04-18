@@ -1,9 +1,23 @@
-import { Sparkles, Video } from "lucide-react";
-import { feed } from "@/data/feed";
+import { Sparkles, Upload as UploadIcon, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useVideoFeed } from "@/hooks/useVideos";
+import { useAuth } from "@/contexts/AuthContext";
 import { VideoCard } from "./VideoCard";
 
 export const Feed = () => {
-  if (feed.length === 0) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { videos, loading } = useVideoFeed();
+
+  if (loading) {
+    return (
+      <main className="grid h-[100dvh] place-items-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </main>
+    );
+  }
+
+  if (videos.length === 0) {
     return (
       <main className="grid h-[100dvh] place-items-center bg-background px-8">
         <div className="flex max-w-xs flex-col items-center text-center">
@@ -17,12 +31,18 @@ export const Feed = () => {
             O feed está esperando
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Seja um dos primeiros criadores a postar no TekTek. Vídeos enviados
-            por usuários aparecerão aqui.
+            Seja o primeiro criador a postar no TekTek. Vídeos enviados pelos usuários aparecerão aqui.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground">
+          <button
+            onClick={() => navigate(user ? "/upload" : "/auth")}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 font-display text-sm font-bold text-background shadow-action"
+          >
+            <UploadIcon className="h-4 w-4" />
+            Postar primeiro vídeo
+          </button>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Em breve: upload de vídeos
+            MP4, MOV ou WebM até 100MB
           </div>
         </div>
       </main>
@@ -31,7 +51,7 @@ export const Feed = () => {
 
   return (
     <main className="snap-feed no-scrollbar h-[100dvh] overflow-y-auto">
-      {feed.map((item, i) => (
+      {videos.map((item, i) => (
         <VideoCard key={item.id} item={item} isFirst={i === 0} />
       ))}
     </main>
