@@ -14,6 +14,8 @@ import Chat from "./pages/Chat.tsx";
 import Settings from "./pages/Settings.tsx";
 import EditProfile from "./pages/EditProfile.tsx";
 import PublicProfile from "./pages/PublicProfile.tsx";
+import Upload from "./pages/Upload.tsx";
+import ArtistUpload from "./pages/ArtistUpload.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
