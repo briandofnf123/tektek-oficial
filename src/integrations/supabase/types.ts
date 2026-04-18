@@ -177,6 +177,7 @@ export type Database = {
           is_official: boolean
           title: string
           updated_at: string
+          uploaded_by: string | null
           use_count: number
         }
         Insert: {
@@ -189,6 +190,7 @@ export type Database = {
           is_official?: boolean
           title: string
           updated_at?: string
+          uploaded_by?: string | null
           use_count?: number
         }
         Update: {
@@ -201,6 +203,7 @@ export type Database = {
           is_official?: boolean
           title?: string
           updated_at?: string
+          uploaded_by?: string | null
           use_count?: number
         }
         Relationships: []
