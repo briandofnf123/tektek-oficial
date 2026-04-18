@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/tektek/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Music2 } from "lucide-react";
 import { AccountSwitcher } from "@/components/tektek/AccountSwitcher";
 
 const Index = () => {
@@ -16,6 +17,15 @@ const Index = () => {
       <h1 className="sr-only">TekTek — Feed de vídeos curtos</h1>
       <Feed />
       <TopBar />
+
+      {/* Floating Music shortcut */}
+      <button
+        onClick={() => navigate("/music")}
+        aria-label="TekTek Music"
+        className="absolute left-3 top-[max(env(safe-area-inset-top),12px)] z-40 grid h-10 w-10 place-items-center rounded-full bg-foreground/10 backdrop-blur-md transition hover:bg-foreground/20"
+      >
+        <Music2 className="h-5 w-5 text-foreground" />
+      </button>
 
       {/* Floating account chip / sign-in CTA */}
       <button
