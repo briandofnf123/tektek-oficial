@@ -38,6 +38,8 @@ const App = () => (
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/inbox/:username" element={<Chat />} />
             <Route path="/u/:username" element={<PublicProfile />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/music/artist" element={<ArtistUpload />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
