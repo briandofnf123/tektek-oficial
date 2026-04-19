@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { captureVideoThumbnail, readImageDimensions } from "@/lib/media";
 
-const MAX_VIDEO_MB = 100;
-const MAX_IMAGE_MB = 10;
+const MAX_VIDEO_MB = 500;
+const MAX_IMAGE_MB = 25;
 
 const Upload_ = () => {
   const navigate = useNavigate();
@@ -88,8 +88,12 @@ const Upload_ = () => {
         const path = `${folder}/${stamp}.${ext}`;
         const { error: vErr } = await supabase.storage
           .from("videos")
-          .upload(path, file, { contentType: file.type, cacheControl: "3600" });
-        if (vErr) throw vErr;
+          .upload(path, file, {
+            contentType: file.type || "video/mp4",
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (vErr) throw new Error(`Vídeo: ${vErr.message}`);
         videoUrl = supabase.storage.from("videos").getPublicUrl(path).data.publicUrl;
         storagePath = path;
         setProgress(60);
@@ -119,8 +123,12 @@ const Upload_ = () => {
         const path = `${folder}/${stamp}.${ext}`;
         const { error: pErr } = await supabase.storage
           .from("thumbnails")
-          .upload(path, file, { contentType: file.type, cacheControl: "3600" });
-        if (pErr) throw pErr;
+          .upload(path, file, {
+            contentType: file.type || "image/jpeg",
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (pErr) throw new Error(`Foto: ${pErr.message}`);
         thumbUrl = supabase.storage.from("thumbnails").getPublicUrl(path).data.publicUrl;
         videoUrl = thumbUrl;
         storagePath = path;
@@ -247,8 +255,8 @@ const Upload_ = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {mode === "video"
-                    ? "MP4, MOV ou WebM até 100MB"
-                    : "JPG, PNG ou WebP até 10MB"}
+                    ? "MP4, MOV ou WebM até 500MB"
+                    : "JPG, PNG ou WebP até 25MB"}
                 </p>
               </div>
             </button>
