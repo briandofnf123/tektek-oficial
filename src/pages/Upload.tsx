@@ -335,9 +335,9 @@ const Upload_ = () => {
             <Music2 className="h-4 w-4" />
           </span>
           <div className="flex-1">
-            <p className="text-sm font-bold">Adicionar som</p>
+            <p className="text-sm font-bold">Adicionar som (opcional)</p>
             <p className="text-[11px] text-muted-foreground">
-              Procure no catálogo TekTek Music
+              Pode publicar sem música — o áudio original será mantido
             </p>
           </div>
         </button>
