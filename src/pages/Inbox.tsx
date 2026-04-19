@@ -159,54 +159,102 @@ const Inbox = () => {
 
       <main className="h-[calc(100dvh-160px)] overflow-y-auto no-scrollbar pb-24">
         {tab === "messages" ? (
-          loading ? (
-            <div className="grid place-items-center py-12">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : conversations.length === 0 ? (
-            <EmptyState
-              icon={MessageSquare}
-              title="Nenhuma conversa ainda"
-              text="Vá ao Descobrir e mande a primeira mensagem para um criador."
-              cta="Encontrar pessoas"
-              onCta={() => navigate("/discover")}
-            />
-          ) : (
-            <ul>
-              {conversations.map((c) => (
-                <li key={c.id}>
-                  <button
-                    onClick={() =>
-                      c.peer && navigate(`/inbox/${c.peer.username}`, { state: { peer: c.peer } })
-                    }
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted"
-                  >
-                    <img
-                      src={
-                        c.peer?.avatar_url ??
-                        `https://api.dicebear.com/9.x/avataaars/svg?seed=${c.peer?.username ?? "user"}`
-                      }
-                      alt=""
-                      className="h-12 w-12 rounded-full bg-card object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate font-display font-bold">
-                          {c.peer?.display_name ?? "Usuário"}
-                        </p>
-                        <span className="ml-2 shrink-0 text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(c.last_message_at))}
-                        </span>
-                      </div>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {c.preview ?? "Diga oi 👋"}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )
+          <>
+            {/* Pinned Support Bot — always visible */}
+            <button
+              onClick={() =>
+                navigate(`/inbox/${SUPPORT_BOT.username}`, {
+                  state: {
+                    peer: {
+                      id: SUPPORT_BOT.user_id,
+                      user_id: SUPPORT_BOT.user_id,
+                      username: SUPPORT_BOT.username,
+                      display_name: SUPPORT_BOT.display_name,
+                      avatar_url: SUPPORT_BOT.avatar_url,
+                      bio: SUPPORT_BOT.bio,
+                      verified: true,
+                      follower_count: 0,
+                      following_count: 0,
+                    } satisfies Profile,
+                  },
+                })
+              }
+              className="flex w-full items-center gap-3 border-b border-border bg-gradient-brand-soft px-4 py-3 text-left transition hover:bg-muted"
+            >
+              <div className="relative">
+                <img
+                  src={SUPPORT_BOT.avatar_url}
+                  alt=""
+                  className="h-12 w-12 rounded-full bg-card object-cover ring-2 ring-primary/40"
+                />
+                <span className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-gradient-brand text-background">
+                  <BadgeCheck className="h-3 w-3" />
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate font-display font-bold">{SUPPORT_BOT.display_name}</p>
+                  <span className="rounded-full bg-gradient-brand px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-background">
+                    bot
+                  </span>
+                </div>
+                <p className="truncate text-sm text-muted-foreground">
+                  Bate um papo — respondo na hora 💜
+                </p>
+              </div>
+            </button>
+
+            {loading ? (
+              <div className="grid place-items-center py-12">
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : conversations.filter((c) => c.peer?.user_id !== SUPPORT_BOT.user_id).length === 0 ? (
+              <EmptyState
+                icon={MessageSquare}
+                title="Comece uma conversa"
+                text="Mande a primeira mensagem para um criador, ou converse com o suporte acima."
+                cta="Encontrar pessoas"
+                onCta={() => navigate("/discover")}
+              />
+            ) : (
+              <ul>
+                {conversations
+                  .filter((c) => c.peer?.user_id !== SUPPORT_BOT.user_id)
+                  .map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onClick={() =>
+                          c.peer && navigate(`/inbox/${c.peer.username}`, { state: { peer: c.peer } })
+                        }
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted"
+                      >
+                        <img
+                          src={
+                            c.peer?.avatar_url ??
+                            `https://api.dicebear.com/9.x/avataaars/svg?seed=${c.peer?.username ?? "user"}`
+                          }
+                          alt=""
+                          className="h-12 w-12 rounded-full bg-card object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="truncate font-display font-bold">
+                              {c.peer?.display_name ?? "Usuário"}
+                            </p>
+                            <span className="ml-2 shrink-0 text-[11px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(c.last_message_at))}
+                            </span>
+                          </div>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {c.preview ?? "Diga oi 👋"}
+                          </p>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </>
         ) : (
           <EmptyState
             icon={Heart}
