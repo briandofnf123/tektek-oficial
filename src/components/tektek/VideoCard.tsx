@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Pause, BadgeCheck, Music2, Play } from "lucide-react";
+import { Heart, BadgeCheck, Music2, Play, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ActionRail } from "./ActionRail";
 import type { VideoWithAuthor } from "@/hooks/useVideos";
+
+const MUTE_KEY = "tektek.feed_muted";
 
 type Burst = { id: number; x: number; y: number };
 
@@ -20,6 +22,10 @@ export const VideoCard = ({
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState<boolean>(() => {
+    if (typeof localStorage === "undefined") return true;
+    return localStorage.getItem(MUTE_KEY) !== "0";
+  });
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,13 +61,27 @@ export const VideoCard = ({
     };
   }, [user, item.id]);
 
-  // Keep play/pause in sync
+  // Keep play/pause + mute in sync
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    v.muted = muted;
     if (paused) v.pause();
     else v.play().catch(() => undefined);
-  }, [paused]);
+  }, [paused, muted]);
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMuted((m) => {
+      const next = !m;
+      try {
+        localStorage.setItem(MUTE_KEY, next ? "1" : "0");
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  };
 
   const onTime = () => {
     const v = videoRef.current;
@@ -117,7 +137,6 @@ export const VideoCard = ({
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay={isFirst}
           loop
-          muted
           playsInline
           preload={isFirst ? "auto" : "metadata"}
           onTimeUpdate={onTime}
@@ -140,6 +159,17 @@ export const VideoCard = ({
         onClick={() => isVideoFile && setPaused((p) => !p)}
         onDoubleClick={handleDoubleTap}
       />
+
+      {/* Mute toggle */}
+      {isVideoFile && (
+        <button
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="absolute right-3 top-[max(env(safe-area-inset-top),12px)] z-30 grid h-10 w-10 place-items-center rounded-full bg-background/40 text-foreground backdrop-blur-md transition active:scale-95"
+        >
+          {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </button>
+      )}
 
       {/* Pause icon */}
       <AnimatePresence>
