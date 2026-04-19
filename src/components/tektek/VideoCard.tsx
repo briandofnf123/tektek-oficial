@@ -137,7 +137,6 @@ export const VideoCard = ({
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay={isFirst}
           loop
-          muted
           playsInline
           preload={isFirst ? "auto" : "metadata"}
           onTimeUpdate={onTime}
@@ -160,6 +159,17 @@ export const VideoCard = ({
         onClick={() => isVideoFile && setPaused((p) => !p)}
         onDoubleClick={handleDoubleTap}
       />
+
+      {/* Mute toggle */}
+      {isVideoFile && (
+        <button
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="absolute right-3 top-[max(env(safe-area-inset-top),12px)] z-30 grid h-10 w-10 place-items-center rounded-full bg-background/40 text-foreground backdrop-blur-md transition active:scale-95"
+        >
+          {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </button>
+      )}
 
       {/* Pause icon */}
       <AnimatePresence>
