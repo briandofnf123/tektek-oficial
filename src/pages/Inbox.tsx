@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Heart, MessageSquare, Search, UserPlus } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bell, Heart, MessageSquare, Search, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type Profile } from "@/contexts/AuthContext";
 import { BottomNav } from "@/components/tektek/BottomNav";
 import { formatDistanceToNow } from "@/lib/time";
+import { SUPPORT_BOT } from "@/lib/supportBot";
 
 type ConvRow = {
   id: string;
