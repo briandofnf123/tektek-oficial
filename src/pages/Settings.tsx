@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Lang } from "@/i18n/translations";
+import { SUPPORT_BOT } from "@/lib/supportBot";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -97,7 +98,22 @@ const Settings = () => {
         {
           icon: HelpCircle,
           label: t("settings.help"),
-          onClick: () => toast.success("suporte@tektek.app"),
+          onClick: () =>
+            navigate(`/inbox/${SUPPORT_BOT.username}`, {
+              state: {
+                peer: {
+                  id: SUPPORT_BOT.user_id,
+                  user_id: SUPPORT_BOT.user_id,
+                  username: SUPPORT_BOT.username,
+                  display_name: SUPPORT_BOT.display_name,
+                  avatar_url: SUPPORT_BOT.avatar_url,
+                  bio: SUPPORT_BOT.bio,
+                  verified: true,
+                  follower_count: 0,
+                  following_count: 0,
+                },
+              },
+            }),
           chevron: true,
         },
         {
