@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Image as ImageIcon, Loader2, Music2, Upload, Video, X } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Loader2, Music2, Plus, Upload, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,14 +8,23 @@ import { captureVideoThumbnail, readImageDimensions } from "@/lib/media";
 
 const MAX_VIDEO_MB = 500;
 const MAX_IMAGE_MB = 25;
+const MAX_PHOTOS = 20;
+
+type PickedPhoto = { file: File; previewUrl: string };
 
 const Upload_ = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
 
   const [mode, setMode] = useState<"video" | "photo">("video");
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Video state
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+
+  // Photos state (multiple)
+  const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+
   const [caption, setCaption] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -29,78 +38,117 @@ const Upload_ = () => {
 
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      photos.forEach((p) => URL.revokeObjectURL(p.previewUrl));
     };
-  }, [previewUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const isVid = f.type.startsWith("video/");
-    const isImg = f.type.startsWith("image/");
-    if (mode === "video" && !isVid) {
-      toast.error("Selecione um arquivo de vídeo");
-      return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+
+    if (mode === "video") {
+      const f = files[0];
+      if (!f.type.startsWith("video/") && !/\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(f.name)) {
+        toast.error("Selecione um arquivo de vídeo");
+        return;
+      }
+      if (f.size > MAX_VIDEO_MB * 1024 * 1024) {
+        toast.error(`Vídeo muito grande (máx ${MAX_VIDEO_MB}MB)`);
+        return;
+      }
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      setVideoFile(f);
+      setVideoPreviewUrl(URL.createObjectURL(f));
+    } else {
+      const remaining = MAX_PHOTOS - photos.length;
+      if (remaining <= 0) {
+        toast.error(`Máximo de ${MAX_PHOTOS} fotos`);
+        return;
+      }
+      const valid: PickedPhoto[] = [];
+      for (const f of files.slice(0, remaining)) {
+        if (!f.type.startsWith("image/")) continue;
+        if (f.size > MAX_IMAGE_MB * 1024 * 1024) {
+          toast.error(`"${f.name}" passa de ${MAX_IMAGE_MB}MB`);
+          continue;
+        }
+        valid.push({ file: f, previewUrl: URL.createObjectURL(f) });
+      }
+      setPhotos((prev) => [...prev, ...valid]);
     }
-    if (mode === "photo" && !isImg) {
-      toast.error("Selecione uma imagem");
-      return;
-    }
-    const maxMb = mode === "video" ? MAX_VIDEO_MB : MAX_IMAGE_MB;
-    if (f.size > maxMb * 1024 * 1024) {
-      toast.error(`Arquivo muito grande (máx ${maxMb}MB)`);
-      return;
-    }
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setFile(f);
-    setPreviewUrl(URL.createObjectURL(f));
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[idx].previewUrl);
+      return prev.filter((_, i) => i !== idx);
+    });
   };
 
   const reset = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setFile(null);
-    setPreviewUrl(null);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    photos.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+    setVideoFile(null);
+    setVideoPreviewUrl(null);
+    setPhotos([]);
     setCaption("");
     setTagsInput("");
     setProgress(0);
   };
 
+  const switchMode = (m: "video" | "photo") => {
+    if (uploading) return;
+    if (videoFile || photos.length) reset();
+    setMode(m);
+  };
+
+  const hasContent = mode === "video" ? !!videoFile : photos.length > 0;
+
   const publish = async () => {
-    if (!user || !file || uploading) return;
+    if (!user || uploading) return;
+    if (!hasContent) return;
+
     setUploading(true);
-    setProgress(8);
+    setProgress(5);
+
+    const tags = tagsInput
+      .split(/[\s,]+/)
+      .map((t) => t.replace(/^#+/, "").trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 10);
 
     try {
-      const isVideo = file.type.startsWith("video/");
-      const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
-      const stamp = Date.now();
-      const folder = user.id;
+      if (mode === "video" && videoFile) {
+        const ext = (videoFile.name.split(".").pop() || "mp4").toLowerCase();
+        const stamp = Date.now();
+        const folder = user.id;
 
-      let videoUrl = "";
-      let thumbUrl: string | null = null;
-      let storagePath = "";
-      let width: number | null = null;
-      let height: number | null = null;
-      let duration = 0;
-
-      if (isVideo) {
-        // 1) Upload video
+        // 1) Upload video file
         const path = `${folder}/${stamp}.${ext}`;
         const { error: vErr } = await supabase.storage
           .from("videos")
-          .upload(path, file, {
-            contentType: file.type || "video/mp4",
+          .upload(path, videoFile, {
+            contentType: videoFile.type || "video/mp4",
             cacheControl: "3600",
             upsert: false,
           });
-        if (vErr) throw new Error(`Vídeo: ${vErr.message}`);
-        videoUrl = supabase.storage.from("videos").getPublicUrl(path).data.publicUrl;
-        storagePath = path;
+        if (vErr) {
+          console.error("[upload-video]", vErr);
+          throw new Error(`Falha ao subir vídeo: ${vErr.message}`);
+        }
+        const videoUrl = supabase.storage.from("videos").getPublicUrl(path).data.publicUrl;
         setProgress(60);
 
-        // 2) Generate + upload thumbnail
+        // 2) Thumbnail (best effort)
+        let thumbUrl: string | null = null;
+        let width: number | null = null;
+        let height: number | null = null;
+        let duration = 0;
         try {
-          const thumb = await captureVideoThumbnail(file, 0.5);
+          const thumb = await captureVideoThumbnail(videoFile, 0.5);
           width = thumb.width;
           height = thumb.height;
           duration = thumb.duration;
@@ -114,60 +162,83 @@ const Upload_ = () => {
           if (!tErr) {
             thumbUrl = supabase.storage.from("thumbnails").getPublicUrl(thumbPath).data.publicUrl;
           }
-        } catch {
-          /* thumbnail optional */
+        } catch (e) {
+          console.warn("[upload-thumb]", e);
         }
         setProgress(85);
+
+        const { error: iErr } = await supabase.from("videos").insert({
+          user_id: user.id,
+          storage_path: path,
+          video_url: videoUrl,
+          thumbnail_url: thumbUrl,
+          caption: caption.trim(),
+          tags,
+          duration_seconds: duration,
+          width,
+          height,
+        });
+        if (iErr) throw iErr;
+
+        setProgress(100);
+        toast.success("Vídeo publicado! 🎬");
       } else {
-        // Photo: store as "video" record using image as both video_url and thumb
-        const path = `${folder}/${stamp}.${ext}`;
-        const { error: pErr } = await supabase.storage
-          .from("thumbnails")
-          .upload(path, file, {
-            contentType: file.type || "image/jpeg",
-            cacheControl: "3600",
-            upsert: false,
+        // Photo carousel — upload each photo, create one row per photo (simple model)
+        const stamp = Date.now();
+        const folder = user.id;
+        const total = photos.length;
+        for (let i = 0; i < total; i++) {
+          const p = photos[i];
+          const ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
+          const path = `${folder}/${stamp}-${i}.${ext}`;
+          const { error: pErr } = await supabase.storage
+            .from("thumbnails")
+            .upload(path, p.file, {
+              contentType: p.file.type || "image/jpeg",
+              cacheControl: "3600",
+              upsert: false,
+            });
+          if (pErr) {
+            console.error("[upload-photo]", pErr);
+            throw new Error(`Falha na foto ${i + 1}: ${pErr.message}`);
+          }
+          const url = supabase.storage.from("thumbnails").getPublicUrl(path).data.publicUrl;
+          let width: number | null = null;
+          let height: number | null = null;
+          try {
+            const dims = await readImageDimensions(p.file);
+            width = dims.width;
+            height = dims.height;
+          } catch {
+            /* ignore */
+          }
+
+          const { error: iErr } = await supabase.from("videos").insert({
+            user_id: user.id,
+            storage_path: path,
+            video_url: url,
+            thumbnail_url: url,
+            caption: i === 0 ? caption.trim() : "",
+            tags: i === 0 ? tags : [],
+            duration_seconds: 0,
+            width,
+            height,
           });
-        if (pErr) throw new Error(`Foto: ${pErr.message}`);
-        thumbUrl = supabase.storage.from("thumbnails").getPublicUrl(path).data.publicUrl;
-        videoUrl = thumbUrl;
-        storagePath = path;
-        try {
-          const dims = await readImageDimensions(file);
-          width = dims.width;
-          height = dims.height;
-        } catch {
-          /* ignore */
+          if (iErr) throw iErr;
+
+          setProgress(Math.round(((i + 1) / total) * 95));
         }
-        setProgress(80);
+        setProgress(100);
+        toast.success(
+          total > 1 ? `${total} fotos publicadas! 📸` : "Foto publicada! 📸",
+        );
       }
 
-      // 3) Insert row
-      const tags = tagsInput
-        .split(/[\s,]+/)
-        .map((t) => t.replace(/^#+/, "").trim().toLowerCase())
-        .filter(Boolean)
-        .slice(0, 10);
-
-      const { error: iErr } = await supabase.from("videos").insert({
-        user_id: user.id,
-        storage_path: storagePath,
-        video_url: videoUrl,
-        thumbnail_url: thumbUrl,
-        caption: caption.trim(),
-        tags,
-        duration_seconds: duration,
-        width,
-        height,
-      });
-      if (iErr) throw iErr;
-
-      setProgress(100);
-      toast.success(isVideo ? "Vídeo publicado! 🎬" : "Foto publicada! 📸");
       reset();
       navigate("/");
     } catch (e) {
       const msg = (e as Error)?.message ?? "Falha ao publicar";
+      console.error("[publish]", e);
       toast.error(msg);
     } finally {
       setUploading(false);
@@ -197,7 +268,7 @@ const Upload_ = () => {
         <h1 className="font-display text-lg font-bold">Novo post</h1>
         <button
           onClick={publish}
-          disabled={!file || uploading}
+          disabled={!hasContent || uploading}
           className="rounded-full bg-gradient-brand px-4 py-1.5 text-sm font-bold text-background disabled:opacity-40"
         >
           {uploading ? "Publicando…" : "Publicar"}
@@ -224,11 +295,7 @@ const Upload_ = () => {
           ).map(({ id, icon: Icon, label }) => (
             <button
               key={id}
-              onClick={() => {
-                if (uploading) return;
-                if (file) reset();
-                setMode(id);
-              }}
+              onClick={() => switchMode(id)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
                 mode === id ? "bg-gradient-brand text-background" : "text-foreground/70"
               }`}
@@ -241,58 +308,113 @@ const Upload_ = () => {
 
         {/* Picker / Preview */}
         <section className="mx-5 mt-5">
-          {!file ? (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="relative grid aspect-[9/16] w-full place-items-center overflow-hidden rounded-3xl border-2 border-dashed border-border bg-card transition hover:border-primary"
-            >
-              <div className="flex flex-col items-center gap-3 px-6 text-center">
-                <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-brand text-background">
-                  <Upload className="h-7 w-7" />
+          {mode === "video" ? (
+            !videoFile ? (
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="relative grid aspect-[9/16] w-full place-items-center overflow-hidden rounded-3xl border-2 border-dashed border-border bg-card transition hover:border-primary"
+              >
+                <div className="flex flex-col items-center gap-3 px-6 text-center">
+                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-brand text-background">
+                    <Upload className="h-7 w-7" />
+                  </div>
+                  <p className="font-display text-lg font-bold">Subir vídeo</p>
+                  <p className="text-sm text-muted-foreground">
+                    MP4, MOV ou WebM até 500MB
+                  </p>
                 </div>
-                <p className="font-display text-lg font-bold">
-                  {mode === "video" ? "Subir vídeo" : "Subir foto"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {mode === "video"
-                    ? "MP4, MOV ou WebM até 500MB"
-                    : "JPG, PNG ou WebP até 25MB"}
-                </p>
-              </div>
-            </button>
-          ) : (
-            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-3xl bg-black">
-              {file.type.startsWith("video/") ? (
+              </button>
+            ) : (
+              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-3xl bg-black">
                 <video
-                  src={previewUrl ?? undefined}
+                  src={videoPreviewUrl ?? undefined}
                   className="h-full w-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
                 />
-              ) : (
-                <img
-                  src={previewUrl ?? undefined}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              )}
-              {!uploading && (
+                {!uploading && (
+                  <button
+                    onClick={reset}
+                    className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/70 backdrop-blur-md"
+                    aria-label="Remover"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )
+          ) : (
+            // Photos grid
+            <div>
+              {photos.length === 0 ? (
                 <button
-                  onClick={reset}
-                  className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/70 backdrop-blur-md"
-                  aria-label="Remover"
+                  onClick={() => fileRef.current?.click()}
+                  className="relative grid aspect-[9/16] w-full place-items-center overflow-hidden rounded-3xl border-2 border-dashed border-border bg-card transition hover:border-primary"
                 >
-                  <X className="h-4 w-4" />
+                  <div className="flex flex-col items-center gap-3 px-6 text-center">
+                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-brand text-background">
+                      <Upload className="h-7 w-7" />
+                    </div>
+                    <p className="font-display text-lg font-bold">Subir fotos</p>
+                    <p className="text-sm text-muted-foreground">
+                      JPG, PNG ou WebP até 25MB cada · até {MAX_PHOTOS} fotos
+                    </p>
+                  </div>
                 </button>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {photos.map((p, idx) => (
+                      <div
+                        key={p.previewUrl}
+                        className="relative aspect-square overflow-hidden rounded-xl bg-card"
+                      >
+                        <img
+                          src={p.previewUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                        {!uploading && (
+                          <button
+                            onClick={() => removePhoto(idx)}
+                            className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-background/80 backdrop-blur"
+                            aria-label="Remover"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {idx === 0 && (
+                          <span className="absolute left-1 top-1 rounded-full bg-gradient-brand px-1.5 py-0.5 text-[9px] font-bold uppercase text-background">
+                            capa
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {photos.length < MAX_PHOTOS && !uploading && (
+                      <button
+                        onClick={() => fileRef.current?.click()}
+                        className="grid aspect-square place-items-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition hover:border-primary hover:text-foreground"
+                        aria-label="Adicionar mais fotos"
+                      >
+                        <Plus className="h-6 w-6" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    {photos.length} / {MAX_PHOTOS} fotos
+                  </p>
+                </>
               )}
             </div>
           )}
+
           <input
             ref={fileRef}
             type="file"
             accept={mode === "video" ? "video/*" : "image/*"}
+            multiple={mode === "photo"}
             className="hidden"
             onChange={onPick}
           />
