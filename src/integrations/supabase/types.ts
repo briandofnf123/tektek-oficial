@@ -169,6 +169,7 @@ export type Database = {
       tracks: {
         Row: {
           artist: string
+          audio_url: string | null
           cover_url: string | null
           created_at: string
           duration_seconds: number
@@ -182,6 +183,7 @@ export type Database = {
         }
         Insert: {
           artist: string
+          audio_url?: string | null
           cover_url?: string | null
           created_at?: string
           duration_seconds?: number
@@ -195,6 +197,7 @@ export type Database = {
         }
         Update: {
           artist?: string
+          audio_url?: string | null
           cover_url?: string | null
           created_at?: string
           duration_seconds?: number

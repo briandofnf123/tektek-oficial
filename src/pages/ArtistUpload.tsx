@@ -38,12 +38,12 @@ const ArtistUpload = () => {
   const onAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("audio/")) {
+    if (!f.type.startsWith("audio/") && !/\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(f.name)) {
       toast.error("Selecione um arquivo de áudio (mp3, wav, m4a)");
       return;
     }
-    if (f.size > 30 * 1024 * 1024) {
-      toast.error("Áudio muito grande (máx 30MB)");
+    if (f.size > 50 * 1024 * 1024) {
+      toast.error("Áudio muito grande (máx 50MB)");
       return;
     }
     setAudio(f);
@@ -83,6 +83,18 @@ const ArtistUpload = () => {
         /* fallback */
       }
 
+      // Upload audio file to audio bucket (required)
+      const audioExt = audio.name.split(".").pop() || "mp3";
+      const audioPath = `${user.id}/track-${Date.now()}.${audioExt}`;
+      const { error: aErr } = await supabase.storage
+        .from("audio")
+        .upload(audioPath, audio, {
+          contentType: audio.type || "audio/mpeg",
+          cacheControl: "3600",
+        });
+      if (aErr) throw new Error(`Áudio: ${aErr.message}`);
+      const audioUrl = supabase.storage.from("audio").getPublicUrl(audioPath).data.publicUrl;
+
       // Upload cover (optional) into thumbnails bucket
       let coverUrl: string | null = null;
       if (cover) {
@@ -96,22 +108,22 @@ const ArtistUpload = () => {
         }
       }
 
-      // NOTE: audio file storage will be added when audio bucket is wired.
-      // For now we register the track metadata so it appears in the catalog.
       const { error } = await supabase.from("tracks").insert({
         title: title.trim(),
         artist: artist.trim() || profile?.display_name || "Artista",
         genre,
         cover_url: coverUrl,
+        audio_url: audioUrl,
         duration_seconds: duration,
         is_official: false,
         uploaded_by: user.id,
       });
       if (error) throw error;
 
-      toast.success("Faixa enviada para revisão! 🎤");
+      toast.success("Faixa enviada! 🎤");
       navigate("/music");
     } catch (e) {
+      console.error("[artist-upload]", e);
       toast.error((e as Error).message || "Falha ao enviar");
     } finally {
       setSubmitting(false);

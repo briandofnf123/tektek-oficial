@@ -113,14 +113,14 @@ export const CommentsDrawer = ({ open, onClose, videoId }: Props) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 z-40 bg-background/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm"
           />
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 240 }}
-            className="absolute inset-x-0 bottom-0 z-50 flex h-[78%] flex-col rounded-t-3xl border-t border-border bg-background"
+            className="fixed inset-x-0 bottom-0 z-[90] mx-auto flex h-[78dvh] w-full max-w-[480px] flex-col rounded-t-3xl border-t border-border bg-background"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="w-8" />

@@ -8,6 +8,7 @@ export type Track = {
   duration_seconds: number;
   genre: string | null;
   cover_url: string | null;
+  audio_url: string | null;
   use_count: number;
   is_official: boolean;
 };
