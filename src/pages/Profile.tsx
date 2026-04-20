@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, BadgeCheck, Bookmark, Grid3x3, Heart, Plus, Settings, Share2, Video } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bookmark, Grid3x3, Heart, Pin, Plus, Settings, Share2, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AccountSwitcher } from "@/components/tektek/AccountSwitcher";
@@ -16,6 +16,18 @@ const Profile = () => {
   const { videos: myVideos, loading: vLoading } = useUserVideos(user?.id);
   const [tabVideos, setTabVideos] = useState<VideoRow[]>([]);
   const [tabLoading, setTabLoading] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = localStorage.getItem(`tektek.pinned.${user.id}`);
+      setPinnedIds(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      setPinnedIds([]);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user || tab === "videos") {
@@ -77,8 +89,39 @@ const Profile = () => {
     `https://api.dicebear.com/9.x/avataaars/svg?seed=${profile.username}&backgroundColor=00d9ff,ff2a8a,a855f7`;
 
   const totalLikes = myVideos.reduce((sum, v) => sum + v.like_count, 0);
-  const showVideos = tab === "videos" ? myVideos : tabVideos;
+  const visibleOwnVideos = myVideos
+    .filter((v) => !deletedIds.includes(v.id))
+    .sort((a, b) => Number(pinnedIds.includes(b.id)) - Number(pinnedIds.includes(a.id)));
+  const showVideos = tab === "videos" ? visibleOwnVideos : tabVideos;
   const isLoading = tab === "videos" ? vLoading : tabLoading;
+
+  const togglePin = (videoId: string) => {
+    if (!user) return;
+    setPinnedIds((prev) => {
+      const next = prev.includes(videoId) ? prev.filter((id) => id !== videoId) : [videoId, ...prev];
+      localStorage.setItem(`tektek.pinned.${user.id}`, JSON.stringify(next));
+      toast.success(prev.includes(videoId) ? "Vídeo desafixado" : "Vídeo fixado no topo");
+      return next;
+    });
+  };
+
+  const deleteVideo = async (video: VideoRow) => {
+    if (!user) return;
+    if (!window.confirm("Apagar este vídeo?")) return;
+    const thumbPath = video.storage_path.replace(/\.[^.]+$/, ".jpg");
+    const [{ error: dbError }] = await Promise.all([
+      supabase.from("videos").delete().eq("id", video.id).eq("user_id", user.id),
+      supabase.storage.from("videos").remove([video.storage_path]),
+      supabase.storage.from("thumbnails").remove([thumbPath]),
+    ]);
+    if (dbError) {
+      toast.error("Não foi possível apagar o vídeo");
+      return;
+    }
+    setDeletedIds((prev) => [...prev, video.id]);
+    setPinnedIds((prev) => prev.filter((id) => id !== video.id));
+    toast.success("Vídeo apagado");
+  };
 
   return (
     <div className="relative mx-auto h-[100dvh] w-full max-w-[480px] overflow-hidden bg-background">
@@ -251,6 +294,16 @@ const Profile = () => {
                   <Heart className="h-3 w-3" />
                   {formatCount(v.like_count)}
                 </div>
+                {tab === "videos" && (
+                  <div className="absolute right-1 top-1 z-10 flex gap-1">
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
+                      <Pin className={`h-3.5 w-3.5 ${pinnedIds.includes(v.id) ? "fill-current" : ""}`} onClick={(e) => { e.stopPropagation(); togglePin(v.id); }} />
+                    </span>
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
+                      <Trash2 className="h-3.5 w-3.5" onClick={(e) => { e.stopPropagation(); void deleteVideo(v); }} />
+                    </span>
+                  </div>
+                )}
               </button>
             ))}
           </div>
