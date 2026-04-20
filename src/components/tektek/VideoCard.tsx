@@ -23,8 +23,8 @@ export const VideoCard = ({
   const [saved, setSaved] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
-    if (typeof localStorage === "undefined") return true;
-    return localStorage.getItem(MUTE_KEY) !== "0";
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem(MUTE_KEY) === "1";
   });
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [progress, setProgress] = useState(0);

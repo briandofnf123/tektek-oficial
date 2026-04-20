@@ -329,9 +329,9 @@ const Upload_ = () => {
                 <video
                   src={videoPreviewUrl ?? undefined}
                   className="h-full w-full object-cover"
+                  controls
                   autoPlay
                   loop
-                  muted
                   playsInline
                 />
                 {!uploading && (
