@@ -25,7 +25,7 @@ export const BottomNav = ({ active = "home" }: { active?: string }) => {
   const [current, setCurrent] = useState<string>(active);
 
   return (
-    <nav className="absolute inset-x-0 bottom-0 z-30 bg-gradient-overlay px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-3">
+    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-[480px] bg-gradient-overlay px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-3">
       <div className="flex items-end justify-around">
         {items.map(({ id, icon: Icon, label, primary, to }) => {
           const isActive = current === id;
