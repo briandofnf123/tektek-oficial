@@ -12,6 +12,27 @@ const MAX_PHOTOS = 20;
 
 type PickedPhoto = { file: File; previewUrl: string };
 
+const inferVideoContentType = (file: File) => {
+  if (file.type?.startsWith("video/")) return file.type;
+
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+
+  switch (ext) {
+    case "mov":
+      return "video/quicktime";
+    case "webm":
+      return "video/webm";
+    case "m4v":
+      return "video/x-m4v";
+    case "mkv":
+      return "video/x-matroska";
+    case "avi":
+      return "video/x-msvideo";
+    default:
+      return "video/mp4";
+  }
+};
+
 const Upload_ = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
@@ -131,7 +152,7 @@ const Upload_ = () => {
         const { error: vErr } = await supabase.storage
           .from("videos")
           .upload(path, videoFile, {
-            contentType: videoFile.type || "video/mp4",
+            contentType: inferVideoContentType(videoFile),
             cacheControl: "3600",
             upsert: false,
           });

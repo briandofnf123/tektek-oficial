@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ActionRail } from "./ActionRail";
 import type { VideoWithAuthor } from "@/hooks/useVideos";
 
-const MUTE_KEY = "tektek.feed_muted";
+const MUTE_KEY = "tektek.feed_muted.v3";
 
 type Burst = { id: number; x: number; y: number };
 
@@ -23,8 +23,7 @@ export const VideoCard = ({
   const [saved, setSaved] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
-    if (typeof localStorage === "undefined") return false;
-    return localStorage.getItem(MUTE_KEY) === "1";
+    return false;
   });
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [progress, setProgress] = useState(0);
@@ -136,6 +135,7 @@ export const VideoCard = ({
           poster={item.thumbnail_url ?? undefined}
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay={isFirst}
+          muted={muted}
           loop
           playsInline
           preload={isFirst ? "auto" : "metadata"}
