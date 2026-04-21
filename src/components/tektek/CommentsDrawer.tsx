@@ -113,7 +113,7 @@ export const CommentsDrawer = ({ open, onClose, videoId }: Props) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[95] bg-background/60 backdrop-blur-sm"
           />
           <motion.div
             initial={{ y: "100%" }}
