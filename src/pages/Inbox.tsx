@@ -29,13 +29,26 @@ const Inbox = () => {
     }
     let mounted = true;
     const load = async () => {
-      const { data: convs } = await supabase
-        .from("conversations")
-        .select("*")
-        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-        .order("last_message_at", { ascending: false });
+      // RLS already restricts rows to participants, so a plain select works
+      // and avoids edge cases with .or() filters that occasionally miss rows.
+      const [aRes, bRes] = await Promise.all([
+        supabase.from("conversations").select("*").eq("user_a", user.id),
+        supabase.from("conversations").select("*").eq("user_b", user.id),
+      ]);
+      const merged = [...(aRes.data ?? []), ...(bRes.data ?? [])]
+        .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i)
+        .sort(
+          (a, b) =>
+            new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime(),
+        );
+      const convs = merged;
 
-      if (!convs || !mounted) {
+      if (!mounted) {
+        setLoading(false);
+        return;
+      }
+      if (convs.length === 0) {
+        setConversations([]);
         setLoading(false);
         return;
       }

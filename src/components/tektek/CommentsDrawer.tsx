@@ -120,7 +120,7 @@ export const CommentsDrawer = ({ open, onClose, videoId }: Props) => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 240 }}
-            className="fixed inset-x-0 bottom-[calc(74px+max(env(safe-area-inset-bottom),10px))] z-[90] mx-auto flex max-h-[78dvh] min-h-[52dvh] w-full max-w-[480px] flex-col rounded-t-3xl border-t border-border bg-background shadow-2xl"
+            className="fixed inset-x-0 bottom-0 z-[100] mx-auto flex max-h-[88dvh] min-h-[60dvh] w-full max-w-[480px] flex-col rounded-t-3xl border-t border-border bg-background shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="w-8" />
