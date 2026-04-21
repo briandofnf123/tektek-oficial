@@ -20,4 +20,7 @@ TekTek: Termos de Serviço e Diretrizes de Código Aberto Documento Oficial para
 # LINK VERSÃO PDF
 https://acrobat.adobe.com/id/urn:aaid:sc:VA6C2:c3da529e-0d6f-4c63-b1bb-468fe66162a4
 
+# LINK VERSÃO WEB
+https://termostektek.edgeone.app/
+
 
