@@ -19,10 +19,18 @@ const items: NavItem[] = [
   { id: "profile", icon: User, label: "Perfil", to: "/profile" },
 ];
 
-export const BottomNav = ({ active = "home" }: { active?: string }) => {
+export const BottomNav = ({
+  active = "home",
+  hidden = false,
+}: {
+  active?: string;
+  hidden?: boolean;
+}) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [current, setCurrent] = useState<string>(active);
+
+  if (hidden) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-[480px] bg-gradient-overlay px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-3">
@@ -31,7 +39,6 @@ export const BottomNav = ({ active = "home" }: { active?: string }) => {
           const isActive = current === id;
           const handle = () => {
             setCurrent(id);
-            // Upload requires auth
             if (id === "upload" && !user) {
               navigate("/auth");
               return;

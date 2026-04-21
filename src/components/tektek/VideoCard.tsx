@@ -7,8 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ActionRail } from "./ActionRail";
 import type { VideoWithAuthor } from "@/hooks/useVideos";
 
-const MUTE_KEY = "tektek.feed_muted.v3";
-
 type Burst = { id: number; x: number; y: number };
 
 export const VideoCard = ({
@@ -22,9 +20,8 @@ export const VideoCard = ({
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState<boolean>(() => {
-    return false;
-  });
+  // Start muted only on first card (browser autoplay policy). User can unmute.
+  const [muted, setMuted] = useState<boolean>(true);
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -38,18 +35,8 @@ export const VideoCard = ({
     if (!user) return;
     let cancel = false;
     Promise.all([
-      supabase
-        .from("video_likes")
-        .select("video_id")
-        .eq("user_id", user.id)
-        .eq("video_id", item.id)
-        .maybeSingle(),
-      supabase
-        .from("video_saves")
-        .select("video_id")
-        .eq("user_id", user.id)
-        .eq("video_id", item.id)
-        .maybeSingle(),
+      supabase.from("video_likes").select("video_id").eq("user_id", user.id).eq("video_id", item.id).maybeSingle(),
+      supabase.from("video_saves").select("video_id").eq("user_id", user.id).eq("video_id", item.id).maybeSingle(),
     ]).then(([l, s]) => {
       if (cancel) return;
       setLiked(!!l.data);
@@ -60,26 +47,33 @@ export const VideoCard = ({
     };
   }, [user, item.id]);
 
-  // Keep play/pause + mute in sync
+  // Apply mute state to <video>
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     v.muted = muted;
+  }, [muted]);
+
+  // Apply pause state
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
     if (paused) v.pause();
     else v.play().catch(() => undefined);
-  }, [paused, muted]);
+  }, [paused]);
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setMuted((m) => {
-      const next = !m;
-      try {
-        localStorage.setItem(MUTE_KEY, next ? "1" : "0");
-      } catch {
-        /* noop */
+    const v = videoRef.current;
+    const next = !muted;
+    setMuted(next);
+    if (v) {
+      v.muted = next;
+      // Unmuting requires a user gesture — call play after to ensure audio plays
+      if (!next) {
+        v.play().catch(() => undefined);
       }
-      return next;
-    });
+    }
   };
 
   const onTime = () => {
@@ -95,11 +89,7 @@ export const VideoCard = ({
     if (next) {
       await supabase.from("video_likes").insert({ user_id: user.id, video_id: item.id });
     } else {
-      await supabase
-        .from("video_likes")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("video_id", item.id);
+      await supabase.from("video_likes").delete().eq("user_id", user.id).eq("video_id", item.id);
     }
   };
 
@@ -110,11 +100,7 @@ export const VideoCard = ({
     if (next) {
       await supabase.from("video_saves").insert({ user_id: user.id, video_id: item.id });
     } else {
-      await supabase
-        .from("video_saves")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("video_id", item.id);
+      await supabase.from("video_saves").delete().eq("user_id", user.id).eq("video_id", item.id);
     }
   };
 
@@ -135,7 +121,6 @@ export const VideoCard = ({
           poster={item.thumbnail_url ?? undefined}
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay={isFirst}
-          muted={muted}
           loop
           playsInline
           preload={isFirst ? "auto" : "metadata"}
@@ -150,7 +135,6 @@ export const VideoCard = ({
         />
       )}
 
-      {/* Vignette */}
       <div className="absolute inset-0 bg-gradient-overlay" />
 
       {/* Tap layer */}
@@ -164,11 +148,22 @@ export const VideoCard = ({
       {isVideoFile && (
         <button
           onClick={toggleMute}
-          aria-label={muted ? "Unmute" : "Mute"}
-          className="absolute right-3 top-[max(env(safe-area-inset-top),12px)] z-30 grid h-10 w-10 place-items-center rounded-full bg-background/40 text-foreground backdrop-blur-md transition active:scale-95"
+          aria-label={muted ? "Ativar som" : "Silenciar"}
+          className={`absolute right-3 top-[max(env(safe-area-inset-top),12px)] z-30 grid h-11 w-11 place-items-center rounded-full backdrop-blur-md transition active:scale-95 ${
+            muted
+              ? "bg-gradient-brand text-background shadow-action"
+              : "bg-background/40 text-foreground"
+          }`}
         >
           {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </button>
+      )}
+
+      {/* Hint to unmute (subtle pill while muted) */}
+      {isVideoFile && muted && (
+        <div className="pointer-events-none absolute right-16 top-[max(env(safe-area-inset-top),16px)] z-20 rounded-full bg-background/60 px-2.5 py-1 text-[11px] font-semibold text-foreground backdrop-blur">
+          Toque para ouvir
+        </div>
       )}
 
       {/* Pause icon */}
