@@ -89,12 +89,50 @@ export type Database = {
         }
         Relationships: []
       }
+      live_streams: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          viewer_count: number
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+          viewer_count?: number
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          viewer_count?: number
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
           conversation_id: string
           created_at: string
           id: string
+          kind: string
+          media_url: string | null
           read_at: string | null
           sender_id: string
         }
@@ -103,6 +141,8 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          kind?: string
+          media_url?: string | null
           read_at?: string | null
           sender_id: string
         }
@@ -111,6 +151,8 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          kind?: string
+          media_url?: string | null
           read_at?: string | null
           sender_id?: string
         }
@@ -133,6 +175,7 @@ export type Database = {
           follower_count: number
           following_count: number
           id: string
+          pronouns: string | null
           updated_at: string
           user_id: string
           username: string
@@ -146,6 +189,7 @@ export type Database = {
           follower_count?: number
           following_count?: number
           id?: string
+          pronouns?: string | null
           updated_at?: string
           user_id: string
           username: string
@@ -159,6 +203,7 @@ export type Database = {
           follower_count?: number
           following_count?: number
           id?: string
+          pronouns?: string | null
           updated_at?: string
           user_id?: string
           username?: string
@@ -166,10 +211,44 @@ export type Database = {
         }
         Relationships: []
       }
+      tekcoins_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          ref_user_id: string | null
+          ref_video_id: string | null
+          ref_withdrawal_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          ref_user_id?: string | null
+          ref_video_id?: string | null
+          ref_withdrawal_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          ref_user_id?: string | null
+          ref_video_id?: string | null
+          ref_withdrawal_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tracks: {
         Row: {
           artist: string
           audio_url: string | null
+          copyright_free: boolean
           cover_url: string | null
           created_at: string
           duration_seconds: number
@@ -184,6 +263,7 @@ export type Database = {
         Insert: {
           artist: string
           audio_url?: string | null
+          copyright_free?: boolean
           cover_url?: string | null
           created_at?: string
           duration_seconds?: number
@@ -198,6 +278,7 @@ export type Database = {
         Update: {
           artist?: string
           audio_url?: string | null
+          copyright_free?: boolean
           cover_url?: string | null
           created_at?: string
           duration_seconds?: number
@@ -334,9 +415,60 @@ export type Database = {
           },
         ]
       }
+      withdrawals: {
+        Row: {
+          coins: number
+          country_code: string
+          created_at: string
+          currency: string
+          destination: string
+          fiat_amount: number
+          id: string
+          method: string
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          country_code?: string
+          created_at?: string
+          currency?: string
+          destination: string
+          fiat_amount: number
+          id?: string
+          method: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          country_code?: string
+          created_at?: string
+          currency?: string
+          destination?: string
+          fiat_amount?: number
+          id?: string
+          method?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      tekcoins_balance: {
+        Row: {
+          balance: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
